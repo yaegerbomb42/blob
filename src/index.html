@@ -1,0 +1,22 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; script-src 'self'; connect-src 'self' https://generativelanguage.googleapis.com">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Blob Agent</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="stage">
+      <div id="blob" class="happy" title="Blob agent"></div>
+      <div id="speech"></div>
+      <div id="hud">
+        <button id="say-btn" title="Blob speaks">💬</button>
+        <button id="mood-btn" title="Cycle mood">🎭</button>
+        <button id="quit-btn" title="Quit">⏻</button>
+      </div>
+    </div>
+    <script src="renderer.js"></script>
+  </body>
+</html>

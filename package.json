@@ -1,0 +1,22 @@
+{
+  "name": "blob-desktop-agent",
+  "version": "0.1.0",
+  "description": "A playful desktop blob agent with moods, memory, and Gemini-powered quips.",
+  "main": "electron/main.js",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+  "dev": "electron .",
+  "start": "electron .",
+  "serve": "node server.js",
+  "setup": "node scripts/setup.js",
+  "build": "echo 'Build not configured yet. Consider using electron-builder or forge.' && exit 0",
+  "postinstall": "echo '✔ Dependencies installed. Run \"npm run setup\" to configure auto-start & Plash.'"
+  },
+  "dependencies": {
+  "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "electron": "^30.0.0"
+  }
+}
