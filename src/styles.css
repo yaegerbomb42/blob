@@ -62,6 +62,17 @@ html, body {
   display: flex;
   gap: 6px;
 }
+#hud.autohide { opacity: 0; transition: opacity .25s ease; }
+#stage:hover #hud.autohide { opacity: 1; }
+#hud #streak-pill {
+  align-self: center;
+  padding: 4px 6px;
+  font-size: 12px;
+  border-radius: 999px;
+  color: #0a3;
+  background: rgba(0, 200, 120, 0.15);
+  border: 1px solid rgba(0, 200, 120, 0.25);
+}
 #hud button {
   font-size: 14px;
   line-height: 1;
@@ -72,6 +83,19 @@ html, body {
   cursor: pointer;
 }
 #hud button:hover { background: white; }
+
+dialog#settings {
+  border: 1px solid rgba(0,0,0,0.2);
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: rgba(255,255,255,0.95);
+  max-width: 280px;
+  font: 14px/1.4 system-ui, sans-serif;
+}
+dialog#settings form { display: grid; gap: 8px; }
+dialog#settings input[type="text"] { width: 100%; padding: 6px 8px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.2); }
+dialog#settings fieldset { border: 1px solid rgba(0,0,0,0.15); border-radius: 8px; }
+dialog#settings menu { display: flex; justify-content: end; gap: 8px; }
 
 @keyframes idle-bounce {
   0%, 100% { transform: translateY(0) scale(1); }
@@ -89,4 +113,11 @@ html, body {
 @keyframes sleepy-bob {
   0%, 100% { transform: translateY(0) scale(1, 1); filter: saturate(0.8); }
   50% { transform: translateY(2px) scale(1.03, 0.97); filter: saturate(0.6); }
+}
+
+@media (prefers-color-scheme: dark) {
+  #speech { color: #eee; background: rgba(30,30,30,0.7); border-color: rgba(255,255,255,0.08); }
+  #hud button { background: rgba(30,30,30,0.7); color: #eee; border-color: rgba(255,255,255,0.12); }
+  #hud button:hover { background: rgba(40,40,40,0.9); }
+  #hud #streak-pill { color: #9f9; background: rgba(20,120,80,0.25); border-color: rgba(100,220,160,0.25); }
 }

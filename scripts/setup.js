@@ -6,6 +6,7 @@ const os = require('os');
 const fs = require('fs');
 const path = require('path');
 const readline = require('readline');
+const { execSync } = require('child_process');
 
 const SERVICE_NAME = 'blob-desktop-agent';
 const SERVICE_FILE = `${SERVICE_NAME}.service`;
@@ -55,9 +56,53 @@ async function main() {
   const PORT = process.env.PORT || 3264;
   printPlashHelp(PORT);
 
+  if (process.platform === 'darwin') {
+    const home = os.homedir();
+    const agentsDir = path.join(home, 'Library', 'LaunchAgents');
+    ensureDir(agentsDir);
+
+    const labelServer = 'com.blob.agent.server';
+    const serverPlist = path.join(agentsDir, `${labelServer}.plist`);
+    const repoDir = process.cwd();
+    const node = process.execPath;
+    const env = {
+      GEMINI_API_KEY: process.env.GEMINI_API_KEY || '',
+      PORT: String(process.env.PORT || 3264)
+    };
+    const serverPlistContent = `<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n<plist version="1.0">\n<dict>\n  <key>Label</key><string>${labelServer}</string>\n  <key>ProgramArguments</key>\n  <array>\n    <string>${node}</string>\n    <string>${path.join(repoDir, 'server.js')}</string>\n  </array>\n  <key>RunAtLoad</key><true/>\n  <key>KeepAlive</key><true/>\n  <key>WorkingDirectory</key><string>${repoDir}</string>\n  <key>EnvironmentVariables</key>\n  <dict>\n    <key>GEMINI_API_KEY</key><string>${env.GEMINI_API_KEY}</string>\n    <key>PORT</key><string>${env.PORT}</string>\n  </dict>\n  <key>StandardOutPath</key><string>${path.join(home, 'Library', 'Logs', 'blob-agent-server.log')}</string>\n  <key>StandardErrorPath</key><string>${path.join(home, 'Library', 'Logs', 'blob-agent-server.log')}</string>\n</dict>\n</plist>\n`;
+    fs.writeFileSync(serverPlist, serverPlistContent, 'utf8');
+    console.log(`\nWrote launchd agent (server): ${serverPlist}`);
+
+    const labelPlash = 'com.blob.agent.plash';
+    const plashPlist = path.join(agentsDir, `${labelPlash}.plist`);
+    const plashOpen = '/usr/bin/open';
+    const plashPlistContent = `<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n<plist version="1.0">\n<dict>\n  <key>Label</key><string>${labelPlash}</string>\n  <key>ProgramArguments</key>\n  <array>\n    <string>${plashOpen}</string>\n    <string>-g</string>\n    <string>-a</string>\n    <string>Plash</string>\n    <string>http://localhost:${env.PORT}</string>\n  </array>\n  <key>RunAtLoad</key><true/>\n  <key>KeepAlive</key><false/>\n</dict>\n</plist>\n`;
+    fs.writeFileSync(plashPlist, plashPlistContent, 'utf8');
+    console.log(`Wrote launchd agent (Plash opener): ${plashPlist}`);
+
+    const runNow = (await ask('\nLoad and start launchd agents now? (y/N): ')).toLowerCase();
+    if (runNow === 'y' || runNow === 'yes') {
+      try {
+        execSync(`launchctl unload -w ${serverPlist} || true`, { stdio: 'inherit', shell: '/bin/bash' });
+        execSync(`launchctl load -w ${serverPlist}`, { stdio: 'inherit' });
+        execSync(`launchctl unload -w ${plashPlist} || true`, { stdio: 'inherit', shell: '/bin/bash' });
+        execSync(`launchctl load -w ${plashPlist}`, { stdio: 'inherit' });
+        console.log(`\n✔ Launch agents loaded. Server at http://localhost:${env.PORT}`);
+      } catch (e) {
+        console.error('\nFailed to load launch agents automatically. Load manually:');
+        console.log(`  launchctl load -w ${serverPlist}`);
+        console.log(`  launchctl load -w ${plashPlist}`);
+      }
+    } else {
+      console.log('\nManual commands to load at login:');
+      console.log(`  launchctl load -w ${serverPlist}`);
+      console.log(`  launchctl load -w ${plashPlist}`);
+    }
+    return;
+  }
+
   if (process.platform !== 'linux') {
-    console.log('\nAuto-start: systemd user services are only configured on Linux in this helper.');
-    console.log('On macOS, consider using launchd or a tool like Plash + keeping the server running.');
+    console.log('\nAuto-start: this helper supports Linux (systemd --user) and macOS (launchd).');
     return;
   }
 
@@ -72,12 +117,28 @@ async function main() {
   writeService(servicePath);
   console.log(`\nWrote service file: ${servicePath}`);
 
-  console.log('\nNext commands (run manually):');
-  console.log('  systemctl --user daemon-reload');
-  console.log(`  systemctl --user enable ${SERVICE_NAME}`);
-  console.log(`  systemctl --user start ${SERVICE_NAME}`);
-  console.log('\nTip: to view logs:');
-  console.log(`  journalctl --user -u ${SERVICE_NAME} -f`);
+  const runNow = (await ask('Run systemctl daemon-reload/enable/start now? (y/N): ')).toLowerCase();
+  if (runNow === 'y' || runNow === 'yes') {
+    try {
+      execSync('systemctl --user daemon-reload', { stdio: 'inherit' });
+      execSync(`systemctl --user enable ${SERVICE_NAME}`, { stdio: 'inherit' });
+      execSync(`systemctl --user start ${SERVICE_NAME}`, { stdio: 'inherit' });
+      console.log(`\n✔ Service enabled and started. URL: http://localhost:${process.env.PORT || 3264}`);
+      console.log(`Logs: journalctl --user -u ${SERVICE_NAME} -f`);
+    } catch (e) {
+      console.error('\nFailed to run systemctl commands automatically. Please run manually:');
+      console.log('  systemctl --user daemon-reload');
+      console.log(`  systemctl --user enable ${SERVICE_NAME}`);
+      console.log(`  systemctl --user start ${SERVICE_NAME}`);
+    }
+  } else {
+    console.log('\nNext commands (run manually):');
+    console.log('  systemctl --user daemon-reload');
+    console.log(`  systemctl --user enable ${SERVICE_NAME}`);
+    console.log(`  systemctl --user start ${SERVICE_NAME}`);
+    console.log('\nTip: to view logs:');
+    console.log(`  journalctl --user -u ${SERVICE_NAME} -f`);
+  }
 }
 
 main().catch((e) => {

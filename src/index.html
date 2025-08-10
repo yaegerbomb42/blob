@@ -11,11 +11,32 @@
     <div id="stage">
       <div id="blob" class="happy" title="Blob agent"></div>
       <div id="speech"></div>
-      <div id="hud">
+      <div id="hud" class="autohide">
+        <span id="streak-pill" title="Ignored streak" hidden>0d</span>
         <button id="say-btn" title="Blob speaks">💬</button>
         <button id="mood-btn" title="Cycle mood">🎭</button>
+        <button id="settings-btn" title="Settings">⚙️</button>
         <button id="quit-btn" title="Quit">⏻</button>
       </div>
+      <dialog id="settings">
+        <form method="dialog">
+          <h3>Blob Settings</h3>
+          <label>
+            Nickname
+            <input id="nickname-input" type="text" placeholder="friend" />
+          </label>
+          <fieldset>
+            <legend>Behaviors</legend>
+            <label><input type="checkbox" id="toggle-teasing" checked /> Playful teasing</label>
+            <label><input type="checkbox" id="toggle-showoff" checked /> Random show-off tricks</label>
+            <label><input type="checkbox" id="toggle-clingy" /> Clingy when ignored</label>
+          </fieldset>
+          <menu>
+            <button value="cancel">Cancel</button>
+            <button id="save-settings" value="default">Save</button>
+          </menu>
+        </form>
+      </dialog>
     </div>
     <script src="renderer.js"></script>
   </body>

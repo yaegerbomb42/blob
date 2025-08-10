@@ -32,6 +32,13 @@ npm run setup
 ```
 This prints Plash instructions and, on Linux, can generate a systemd --user service to auto-start on login.
 
+macOS auto-start (launchd) and Plash opener
+- Run `npm run setup` on macOS too. It will create two LaunchAgents:
+	- com.blob.agent.server — starts `node server.js` at login
+	- com.blob.agent.plash — opens Plash pointed at `http://localhost:3264`
+- The script can also load them immediately via `launchctl` if you confirm.
+- Logs: `~/Library/Logs/blob-agent-server.log`
+
 Notes
 - The app uses the Gemini REST API via the v1beta generateContent endpoint with the `X-goog-api-key` header (model: gemini-2.0-flash).
 - Memory persists to a small JSON file in your Electron userData folder (nickname, inside jokes, flags).
